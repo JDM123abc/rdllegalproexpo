@@ -1,14 +1,16 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import firebase from '@react-native-firebase/app';
+import '@react-native-firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCkXT93EFe3om3UODrmLFYCEHVDLMCBrcc",
+  authDomain: "rdl-legalpro.firebaseapp.com",
+  projectId: "rdl-legalpro",
+  storageBucket: "rdl-legalpro.firebasestorage.app",
+  messagingSenderId: "944390645097",
+  appId: "1:944390645097:android:45ecd59a5a885a642349f8"
 };
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+export const db = firebase.firestore();

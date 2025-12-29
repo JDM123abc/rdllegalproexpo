@@ -1,5 +1,28 @@
 {
-  "android": {
-    "package": "com.rdl.legalpro.rdllegalproexpo"
+  "expo": {
+    "name": "RDLLegalProExpo",
+    "slug": "rdllegalproexpo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.rdl.legalpro.rdllegalproexpo"
+    },
+    "web": {},
+    "scheme": "rdllegalproexpo",
+    "plugins": [
+      "expo-dev-client"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4dc5482f-2722-4859-82ad-873c30a15e85"
+      }
+    }
   }
 }
