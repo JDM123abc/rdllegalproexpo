@@ -9,15 +9,22 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rdllegalpro.app",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
-      "package": "com.rdl.legalpro.rdllegalproexpo"
+      "package": "com.rdllegalpro.app",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {},
     "scheme": "rdllegalproexpo",
     "plugins": [
-      "expo-dev-client"
+      "expo-dev-client",
+      "@react-native-firebase/auth"
     ],
     "extra": {
       "eas": {

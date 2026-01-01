@@ -6,7 +6,11 @@ import {
   AppState,
   Animated,
   TouchableOpacity,
-  Button
+  Button,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import * as Contacts from 'expo-contacts';
@@ -17,13 +21,17 @@ export default function Home() {
   const appState = useRef(AppState.currentState);
   const callStartTime = useRef<number | null>(null);
   const [selectedContact, setSelectedContact] = useState<{ name: string; number: string } | null>(null);
-  const [isIncoming, setIsIncoming] = useState(false);
   const justPickedContact = useRef(false);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [manualName, setManualName] = useState('');
+  const [manualNumber, setManualNumber] = useState('');
+  const [currentDuration, setCurrentDuration] = useState('');
+  const [isLogging, setIsLogging] = useState(false);
 
   const pulseSelect = useRef(new Animated.Value(1)).current;
   const pulseCall = useRef(new Animated.Value(1)).current;
 
-  // Pulse Select Contact when no contact selected
   useEffect(() => {
     if (!selectedContact) {
       Animated.loop(
@@ -37,7 +45,6 @@ export default function Home() {
     }
   }, [selectedContact]);
 
-  // Pulse Make Call only when contact selected and no active call
   useEffect(() => {
     if (selectedContact && callStartTime.current === null) {
       Animated.loop(
@@ -50,6 +57,27 @@ export default function Home() {
       pulseCall.setValue(1);
     }
   }, [selectedContact, callStartTime.current]);
+
+  const pickContactForModal = async () => {
+    const { status } = await Contacts.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission denied', 'Need contacts permission');
+      return;
+    }
+
+    try {
+      const result = await Contacts.presentContactPickerAsync();
+
+      if (!result || !result.phoneNumbers?.[0]) return;
+
+      const name = result.name || 'Unknown';
+      const number = result.phoneNumbers[0].number.replace(/[^0-9+]/g, '');
+      setManualName(name);
+      setManualNumber(number);
+    } catch (e) {
+      // silent
+    }
+  };
 
   const pickContact = async () => {
     const { status } = await Contacts.requestPermissionsAsync();
@@ -69,7 +97,6 @@ export default function Home() {
       const name = result.name || 'Unknown';
       const number = result.phoneNumbers[0].number.replace(/[^0-9+]/g, '');
       setSelectedContact({ name, number });
-      setIsIncoming(false);
       Alert.alert('Contact Selected', `${name}\n${number}`);
     } catch (e) {
       justPickedContact.current = false;
@@ -78,24 +105,24 @@ export default function Home() {
 
   const makeCall = () => {
     if (!selectedContact) return;
-    setIsIncoming(false);
     callStartTime.current = Date.now();
     Linking.openURL(`tel:${selectedContact.number}`);
   };
 
-  const logCall = async (type: 'Business' | 'Private', formatted: string) => {
+  const logCall = async (type: 'Business' | 'Private') => {
+    if (isLogging) return;
+    setIsLogging(true);
+
     console.log('=== LOG CALL START ===');
-    console.log('Contact:', selectedContact ? selectedContact.name : 'Incoming');
-    console.log('Number:', selectedContact ? selectedContact.number : 'Unknown');
-    console.log('Duration:', formatted);
-    console.log('Type:', type);
 
     try {
+      const isOutgoing = !!selectedContact;
       const logData = {
-        contactName: selectedContact ? selectedContact.name : (isIncoming ? 'Incoming Call' : 'Unknown'),
-        contactNumber: selectedContact ? selectedContact.number : 'Unknown',
-        duration: formatted,
+        contactName: manualName || (isOutgoing ? selectedContact?.name || 'Outgoing Call' : 'Incoming Call'),
+        contactNumber: manualNumber || (isOutgoing ? selectedContact?.number || 'Unknown' : 'Unknown'),
+        duration: currentDuration,
         callType: type,
+        direction: isOutgoing ? 'Outgoing' : 'Incoming',
         timestamp: serverTimestamp()
       };
 
@@ -104,41 +131,35 @@ export default function Home() {
       const docRef = await addDoc(collection(db, 'calls'), logData);
       console.log('SUCCESS: Document written with ID:', docRef.id);
 
-      Alert.alert('Saved to Database', `Logged as ${type}\nCheck Firestore soon`);
+      Alert.alert('Saved!', `Call logged as ${type}`);
     } catch (e: any) {
       console.error('FIRESTORE ERROR:', e);
-      console.error('Error code:', e.code);
-      console.error('Error message:', e.message);
       Alert.alert('Save Failed', `Error: ${e.message || 'Unknown'}`);
+    } finally {
+      setIsLogging(false);
+      setModalVisible(false);
+      setManualName('');
+      setManualNumber('');
+      setCurrentDuration('');
+      setSelectedContact(null);
     }
 
     console.log('=== LOG CALL END ===');
   };
 
-  const showCallLogAlert = (formatted: string) => {
-    const name = selectedContact ? selectedContact.name : (isIncoming ? 'Incoming Call' : 'Unknown');
-    const number = selectedContact ? selectedContact.number : 'Unknown';
-
-    Alert.alert(
-      'Call Complete',
-      `Contact Name: ${name}\nContact Number: ${number}\nDuration: ${formatted}`,
-      [
-        { text: 'Business', onPress: () => logCall('Business', formatted) },
-        { text: 'Private', onPress: () => logCall('Private', formatted) },
-        { text: 'Cancel', style: 'cancel' }
-      ]
-    );
-
-    // Clear contact after popup so Select Contact pulses again
-    setSelectedContact(null);
+  const showCallLogModal = (formatted: string) => {
+    const isOutgoing = !!selectedContact;
+    setCurrentDuration(formatted);
+    setManualName(isOutgoing ? selectedContact?.name || '' : '');
+    setManualNumber(isOutgoing ? selectedContact?.number || '' : '');
+    setModalVisible(true);
   };
 
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
+    const subscription = AppState.addEventEmitter('change', nextAppState => {
       if (appState.current === 'active' && nextAppState.match(/inactive|background/)) {
         if (!justPickedContact.current && !callStartTime.current) {
           callStartTime.current = Date.now();
-          setIsIncoming(!selectedContact);
         }
       }
 
@@ -150,7 +171,6 @@ export default function Home() {
 
           if (totalSeconds < 5) {
             callStartTime.current = null;
-            setIsIncoming(false);
             return;
           }
 
@@ -159,9 +179,8 @@ export default function Home() {
           const seconds = totalSeconds % 60;
           const formatted = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-          showCallLogAlert(formatted);
+          showCallLogModal(formatted);
           callStartTime.current = null;
-          setIsIncoming(false);
         }
       }
       appState.current = nextAppState;
@@ -206,6 +225,45 @@ export default function Home() {
           Ready to call:\n{selectedContact.name}\n({selectedContact.number})
         </Text>
       )}
+
+      <Modal visible={modalVisible} transparent animationType="slide">
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, width: '90%' }}>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 10 }}>Call Complete</Text>
+            <Text style={{ marginBottom: 20 }}>Duration: {currentDuration}</Text>
+
+            <Button title="Pick from Contacts" onPress={pickContactForModal} color="#007AFF" />
+
+            <View style={{ height: 10 }} />
+
+            <Text style={{ fontWeight: 'bold' }}>Client Name</Text>
+            <TextInput
+              style={{ borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 10, borderRadius: 5 }}
+              placeholder="Enter client name (optional)"
+              value={manualName}
+              onChangeText={setManualName}
+            />
+
+            <Text style={{ fontWeight: 'bold' }}>Client Number (optional)</Text>
+            <TextInput
+              style={{ borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 20, borderRadius: 5 }}
+              placeholder="Enter client number"
+              value={manualNumber}
+              onChangeText={setManualNumber}
+              keyboardType="phone-pad"
+            />
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+              <Button title="Business" onPress={() => logCall('Business')} disabled={isLogging} />
+              <Button title="Private" onPress={() => logCall('Private')} disabled={isLogging} />
+              <Button title="Cancel" onPress={() => {
+                setModalVisible(false);
+                setSelectedContact(null);
+              }} color="gray" />
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
