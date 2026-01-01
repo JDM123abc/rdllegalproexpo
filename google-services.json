@@ -1,14 +1,48 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCkXT93EFe3om3UODrmLFYCEHVDLMCBrcc",
-  authDomain: "rdl-legalpro.firebaseapp.com",
-  projectId: "rdl-legalpro",
-  storageBucket: "rdl-legalpro.firebasestorage.app",
-  messagingSenderId: "944390645097",
-  appId: "1:944390645097:android:45ecd59a5a885a642349f8"
-};
-
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+{
+  "project_info": {
+    "project_number": "944390645097",
+    "project_id": "rdl-legalpro",
+    "storage_bucket": "rdl-legalpro.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:944390645097:android:45ecd59a5a885a642349f8",
+        "android_client_info": {
+          "package_name": "com.rdl.legalpro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkXT93EFe3om3UODrmLFYCEHVDLMCBrcc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:944390645097:android:9acfa991d968c3b92349f8",
+        "android_client_info": {
+          "package_name": "com.rdllegalpro.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkXT93EFe3om3UODrmLFYCEHVDLMCBrcc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
