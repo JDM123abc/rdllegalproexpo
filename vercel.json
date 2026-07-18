@@ -1,5 +1,4 @@
-{
-  "framework": "expo",
+﻿{
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
