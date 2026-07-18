@@ -5,6 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -20,15 +21,39 @@
       "package": "com.rdllegalpro.app",
       "googleServicesFile": "./google-services.json"
     },
-    "web": {},
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
     "scheme": "rdllegalproexpo",
     "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.1.20",
+            "enableProguardInReleaseBuilds": true,
+            "packagingOptions": {
+              "pickFirst": ["**/*.so"]
+            },
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "useLegacyPackaging": true
+          }
+        }
+      ],
       "expo-dev-client",
-      "@react-native-firebase/auth"
+      "@react-native-firebase/auth",
+      "@react-native-firebase/app",
+      "expo-font",
+      "expo-router",
+      "expo-web-browser",
+      "expo-asset"
     ],
     "extra": {
       "eas": {
-        "projectId": "4dc5482f-2722-4859-82ad-873c30a15e85"
+        "projectId": "8f6118a8-00e1-4772-88bd-34b858c7f699"
       }
     }
   }
